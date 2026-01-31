@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Session Export</title>
+  <style>
+    :root {
+      --bg-primary: #1a1a2e;
+      --bg-secondary: #16213e;
+      --bg-tertiary: #0f0f23;
+      --bg-card: #1e1e3f;
+      --bg-user: #2d2d5a;
+      --bg-assistant: #1e1e3f;
+      --bg-tool: #162032;
+      --text-primary: #e4e4e7;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --border-color: #3f3f6f;
+      --accent: #818cf8;
+      --accent-hover: #a5b4fc;
+      --success: #4ade80;
+      --error: #f87171;
+      --code-bg: #0d0d1a;
+      --sidebar-width: 300px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    #sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      z-index: 100;
+      transition: transform 0.3s ease;
+    }
+
+    #sidebar.hidden {
+      transform: translateX(-100%);
+    }
+
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .sidebar-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .sidebar-search {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 13px;
+    }
+
+    .sidebar-search:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .sidebar-filters {
+      display: flex;
+      gap: 6px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 4px 10px;
+      font-size: 11px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--accent);
+      color: var(--text-primary);
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    .nav-item {
+      padding: 8px 12px;
+      margin-bottom: 4px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .nav-item-icon {
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .nav-item-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Main content */
+    #main {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      transition: margin-left 0.3s ease;
+    }
+
+    #main.expanded {
+      margin-left: 0;
+    }
+
+    #toggle-sidebar {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 101;
+      width: 36px;
+      height: 36px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    #toggle-sidebar:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .sidebar-visible #toggle-sidebar {
+      left: calc(var(--sidebar-width) + 16px);
+    }
+
+    /* Header */
+    #header {
+      padding: 24px 32px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+    }
+
+    #header h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .header-meta {
+      display: flex;
+      gap: 24px;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .header-meta span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Messages */
+    #messages {
+      padding: 24px 32px;
+      max-width: 900px;
+    }
+
+    .message {
+      margin-bottom: 24px;
+      scroll-margin-top: 80px;
+    }
+
+    .message-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .message-role {
+      font-weight: 600;
+      font-size: 14px;
+      padding: 4px 12px;
+      border-radius: 4px;
+    }
+
+    .message-role.user {
+      background: var(--bg-user);
+      color: var(--accent);
+    }
+
+    .message-role.assistant {
+      background: var(--bg-assistant);
+      color: var(--success);
+    }
+
+    .message-content {
+      padding: 16px 20px;
+      background: var(--bg-card);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .message-content p {
+      margin-bottom: 12px;
+    }
+
+    .message-content p:last-child {
+      margin-bottom: 0;
+    }
+
+    .message-content ul, .message-content ol {
+      margin: 12px 0;
+      padding-left: 24px;
+    }
+
+    .message-content li {
+      margin-bottom: 6px;
+    }
+
+    /* Tool uses */
+    .tool-use {
+      margin-top: 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .tool-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: var(--bg-tool);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .tool-header:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .tool-name {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tool-toggle {
+      color: var(--text-muted);
+      font-size: 12px;
+      transition: transform 0.2s;
+    }
+
+    .tool-use.collapsed .tool-toggle {
+      transform: rotate(-90deg);
+    }
+
+    .tool-use.collapsed .tool-content {
+      display: none;
+    }
+
+    .tool-content {
+      padding: 16px;
+      background: var(--bg-tertiary);
+    }
+
+    .tool-params {
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+
+    .tool-params strong {
+      color: var(--text-secondary);
+    }
+
+    .tool-params code {
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 12px;
+    }
+
+    .tool-output {
+      background: var(--code-bg);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .tool-output-header {
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.05);
+      font-size: 11px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .tool-output pre {
+      margin: 0;
+      padding: 12px;
+      overflow-x: auto;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    /* Code blocks */
+    pre {
+      background: var(--code-bg);
+      border-radius: 6px;
+      padding: 12px;
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+
+    code {
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 13px;
+    }
+
+    p code {
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 13px;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border: 1px solid var(--border-color);
+    }
+
+    th {
+      background: var(--bg-tertiary);
+      font-weight: 600;
+    }
+
+    /* Links */
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: var(--accent-hover);
+      text-decoration: underline;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-tertiary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    /* Syntax highlighting (basic) */
+    .hljs-keyword { color: #c678dd; }
+    .hljs-string { color: #98c379; }
+    .hljs-number { color: #d19a66; }
+    .hljs-comment { color: #5c6370; font-style: italic; }
+    .hljs-function { color: #61afef; }
+    .hljs-class { color: #e5c07b; }
+    .hljs-variable { color: #e06c75; }
+    .hljs-attr { color: #d19a66; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      #sidebar {
+        transform: translateX(-100%);
+      }
+
+      #sidebar.visible {
+        transform: translateX(0);
+      }
+
+      #main {
+        margin-left: 0;
+      }
+
+      #toggle-sidebar {
+        left: 16px !important;
+      }
+
+      #messages {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body class="sidebar-visible">
+  <button id="toggle-sidebar" title="Toggle sidebar">☰</button>
+
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">Navigation</div>
+      <input type="text" class="sidebar-search" id="search" placeholder="Search messages...">
+      <div class="sidebar-filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="user">User</button>
+        <button class="filter-btn" data-filter="assistant">Assistant</button>
+        <button class="filter-btn" data-filter="tools">Tools</button>
+      </div>
+    </div>
+    <nav class="sidebar-nav" id="nav"></nav>
+  </aside>
+
+  <main id="main">
+    <header id="header">
+      <h1>Session Export</h1>
+      <div class="header-meta">
+        <span id="meta-date"></span>
+        <span id="meta-dir"></span>
+      </div>
+    </header>
+    <div id="messages"></div>
+  </main>
+
+  <script id="session-data" type="application/json">{{SESSION_DATA}}</script>
+
+  <script>
+    // Simple marked.js alternative for basic markdown
+    function parseMarkdown(text) {
+      if (!text) return '';
+
+      // Escape HTML first
+      let html = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+      // Code blocks (fenced)
+      html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
+        return `<pre><code class="language-${lang || 'text'}">${code.trim()}</code></pre>`;
+      });
+
+      // Inline code
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+      // Bold
+      html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+      // Italic
+      html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+      // Headers
+      html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+      html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+      html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+      // Links
+      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+      // Lists
+      html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
+      html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+      html = html.replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>');
+      html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+
+      // Tables (basic)
+      html = html.replace(/\|(.+)\|/g, (match) => {
+        const cells = match.split('|').filter(c => c.trim());
+        if (cells.every(c => /^[\s-:]+$/.test(c))) return ''; // separator row
+        const cellHtml = cells.map(c => `<td>${c.trim()}</td>`).join('');
+        return `<tr>${cellHtml}</tr>`;
+      });
+      html = html.replace(/(<tr>.*<\/tr>\n?)+/g, '<table>$&</table>');
+
+      // Paragraphs
+      html = html.replace(/\n\n+/g, '</p><p>');
+      html = '<p>' + html + '</p>';
+      html = html.replace(/<p>\s*<(h[1-6]|ul|ol|pre|table)/g, '<$1');
+      html = html.replace(/<\/(h[1-6]|ul|ol|pre|table)>\s*<\/p>/g, '</$1>');
+      html = html.replace(/<p>\s*<\/p>/g, '');
+
+      return html;
+    }
+
+    // Load and render session data
+    function init() {
+      const dataEl = document.getElementById('session-data');
+      let data;
+
+      try {
+        const jsonText = dataEl.textContent.trim();
+        console.log('Session data length:', jsonText.length);
+        console.log('First 50 chars:', jsonText.substring(0, 50));
+        const isPlaceholder = jsonText.includes('SESSION_DATA') && jsonText.includes('{{');
+        console.log('Is placeholder?', isPlaceholder);
+        console.log('Starts with eyJ?', jsonText.startsWith('eyJ'));
+        if (isPlaceholder) {
+          // Template not filled - show placeholder
+          document.getElementById('messages').innerHTML = '<p style="color: var(--text-muted); padding: 20px;">Session data not loaded. This is the template file.</p>';
+          return;
+        }
+        console.log('Attempting to decode base64...');
+        const decoded = atob(jsonText);
+        console.log('Decoded length:', decoded.length);
+        data = JSON.parse(decoded);
+        console.log('Parsed successfully, messages:', data.messages?.length);
+      } catch (e) {
+        console.error('Failed to parse session data:', e);
+        document.getElementById('messages').innerHTML = '<p style="color: var(--error);">Failed to load session data.</p>';
+        return;
+      }
+
+      // Set metadata
+      document.getElementById('meta-date').textContent = '📅 ' + (data.metadata?.exportedAt || 'Unknown date');
+      document.getElementById('meta-dir').textContent = '📁 ' + (data.metadata?.workingDirectory || 'Unknown');
+
+      // Render messages
+      const messagesEl = document.getElementById('messages');
+      const navEl = document.getElementById('nav');
+      let messageIndex = 0;
+
+      data.messages.forEach((msg, idx) => {
+        const msgEl = document.createElement('div');
+        msgEl.className = 'message';
+        msgEl.id = 'msg-' + idx;
+        msgEl.dataset.role = msg.role;
+
+        const headerEl = document.createElement('div');
+        headerEl.className = 'message-header';
+
+        const roleEl = document.createElement('span');
+        roleEl.className = 'message-role ' + msg.role;
+        roleEl.textContent = msg.role.charAt(0).toUpperCase() + msg.role.slice(1);
+        headerEl.appendChild(roleEl);
+
+        msgEl.appendChild(headerEl);
+
+        const contentEl = document.createElement('div');
+        contentEl.className = 'message-content';
+
+        if (typeof msg.content === 'string') {
+          contentEl.innerHTML = parseMarkdown(msg.content);
+        } else if (Array.isArray(msg.content)) {
+          msg.content.forEach(block => {
+            if (block.type === 'text') {
+              const textDiv = document.createElement('div');
+              textDiv.innerHTML = parseMarkdown(block.text);
+              contentEl.appendChild(textDiv);
+            } else if (block.type === 'tool_use') {
+              const toolEl = createToolElement(block);
+              contentEl.appendChild(toolEl);
+            }
+          });
+        }
+
+        msgEl.appendChild(contentEl);
+        messagesEl.appendChild(msgEl);
+
+        // Add to nav
+        const navItem = document.createElement('div');
+        navItem.className = 'nav-item';
+        navItem.dataset.target = 'msg-' + idx;
+        navItem.dataset.role = msg.role;
+
+        const icon = document.createElement('span');
+        icon.className = 'nav-item-icon';
+        icon.textContent = msg.role === 'user' ? '👤' : '🤖';
+
+        const text = document.createElement('span');
+        text.className = 'nav-item-text';
+        const preview = typeof msg.content === 'string'
+          ? msg.content
+          : msg.content.find(b => b.type === 'text')?.text || 'Tool use';
+        text.textContent = preview.slice(0, 50) + (preview.length > 50 ? '...' : '');
+
+        navItem.appendChild(icon);
+        navItem.appendChild(text);
+        navItem.onclick = () => {
+          document.getElementById('msg-' + idx).scrollIntoView({ behavior: 'smooth' });
+          document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+          navItem.classList.add('active');
+        };
+
+        navEl.appendChild(navItem);
+      });
+    }
+
+    function createToolElement(block) {
+      const toolEl = document.createElement('div');
+      toolEl.className = 'tool-use';
+
+      const headerEl = document.createElement('div');
+      headerEl.className = 'tool-header';
+      headerEl.onclick = () => toolEl.classList.toggle('collapsed');
+
+      const nameEl = document.createElement('span');
+      nameEl.className = 'tool-name';
+      nameEl.innerHTML = '🔧 ' + (block.name || 'Tool');
+
+      const toggleEl = document.createElement('span');
+      toggleEl.className = 'tool-toggle';
+      toggleEl.textContent = '▼';
+
+      headerEl.appendChild(nameEl);
+      headerEl.appendChild(toggleEl);
+      toolEl.appendChild(headerEl);
+
+      const contentEl = document.createElement('div');
+      contentEl.className = 'tool-content';
+
+      // Parameters
+      if (block.input) {
+        const paramsEl = document.createElement('div');
+        paramsEl.className = 'tool-params';
+
+        if (typeof block.input === 'object') {
+          Object.entries(block.input).forEach(([key, value]) => {
+            const paramLine = document.createElement('div');
+            paramLine.innerHTML = `<strong>${key}:</strong> <code>${typeof value === 'string' ? value : JSON.stringify(value)}</code>`;
+            paramsEl.appendChild(paramLine);
+          });
+        } else {
+          paramsEl.innerHTML = `<code>${block.input}</code>`;
+        }
+
+        contentEl.appendChild(paramsEl);
+      }
+
+      // Output
+      if (block.output) {
+        const outputEl = document.createElement('div');
+        outputEl.className = 'tool-output';
+
+        const outputHeader = document.createElement('div');
+        outputHeader.className = 'tool-output-header';
+        outputHeader.textContent = 'Output';
+
+        const preEl = document.createElement('pre');
+        preEl.textContent = block.output;
+
+        outputEl.appendChild(outputHeader);
+        outputEl.appendChild(preEl);
+        contentEl.appendChild(outputEl);
+      }
+
+      toolEl.appendChild(contentEl);
+      return toolEl;
+    }
+
+    // Sidebar toggle
+    document.getElementById('toggle-sidebar').onclick = () => {
+      document.getElementById('sidebar').classList.toggle('hidden');
+      document.getElementById('main').classList.toggle('expanded');
+      document.body.classList.toggle('sidebar-visible');
+    };
+
+    // Search
+    document.getElementById('search').oninput = (e) => {
+      const query = e.target.value.toLowerCase();
+      document.querySelectorAll('.message').forEach(msg => {
+        const text = msg.textContent.toLowerCase();
+        msg.style.display = text.includes(query) ? 'block' : 'none';
+      });
+      document.querySelectorAll('.nav-item').forEach(nav => {
+        const text = nav.textContent.toLowerCase();
+        nav.style.display = text.includes(query) ? 'flex' : 'none';
+      });
+    };
+
+    // Filters
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const filter = btn.dataset.filter;
+        document.querySelectorAll('.message').forEach(msg => {
+          if (filter === 'all') {
+            msg.style.display = 'block';
+          } else if (filter === 'tools') {
+            msg.style.display = msg.querySelector('.tool-use') ? 'block' : 'none';
+          } else {
+            msg.style.display = msg.dataset.role === filter ? 'block' : 'none';
+          }
+        });
+
+        document.querySelectorAll('.nav-item').forEach(nav => {
+          if (filter === 'all') {
+            nav.style.display = 'flex';
+          } else if (filter === 'tools') {
+            nav.style.display = 'flex'; // Show all in nav for tools filter
+          } else {
+            nav.style.display = nav.dataset.role === filter ? 'flex' : 'none';
+          }
+        });
+      };
+    });
+
+    // Initialize
+    init();
+  </script>
+</body>
+</html>

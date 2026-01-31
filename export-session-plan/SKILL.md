@@ -1,6 +1,6 @@
 ---
-name: export-session
-description: Export the current conversation to Markdown and HTML files for sharing or archiving
+name: export-session-plan
+description: Export the current conversation to Markdown and HTML files with implementation plan
 disable-model-invocation: true
 allowed-tools: Write, Bash, Read
 argument-hint: [session-name]
@@ -8,7 +8,7 @@ argument-hint: [session-name]
 
 # Export Session to Markdown and HTML
 
-Export this conversation with Claude-generated summary.
+Export this conversation with Claude-generated summary and implementation plan.
 
 ## Output Paths
 
@@ -25,8 +25,8 @@ Timestamp format: `YYYY-MM-DD-HHMM` (e.g., `2024-01-29-1430`)
 ### With Arguments
 
 If the user provides a name, use it as the session directory name:
-- `/export-session auth-refactor` → `exports/sessions/auth-refactor/`
-- `/export-session ./custom/path` → `./custom/path/` (absolute paths bypass the default location logic)
+- `/export-session-plan auth-refactor` → `exports/sessions/auth-refactor/`
+- `/export-session-plan ./custom/path` → `./custom/path/` (absolute paths bypass the default location logic)
 
 ### Files Created
 
@@ -34,9 +34,10 @@ Within the session directory:
 - `session.json` - Raw session data (intermediate)
 - `session.html` - Interactive transcript view
 - `session.md` - Claude-generated summary (problem/solution/gotchas)
+- `PLAN.md` - The implementation plan from the session
 
 Plus in exports/:
-- `CHANGELOG.md` - Timeline of exported sessions
+- `CHANGELOG.md` - Timeline of when plans were created
 
 Example structure:
 ```
@@ -45,8 +46,9 @@ exports/
 │   └── 2025-01-30-auth-refactor/
 │       ├── session.json      # Raw session data
 │       ├── session.html      # Interactive transcript view
-│       └── session.md        # Claude-generated summary
-└── CHANGELOG.md              # Timeline of sessions
+│       ├── session.md        # Claude-generated summary
+│       └── PLAN.md           # Implementation plan
+└── CHANGELOG.md              # Timeline of plans
 ```
 
 ## Step 1: Determine Output Directory
@@ -135,17 +137,31 @@ Claude writes `session.md` directly (do NOT run Python for this). Use this struc
 
 Write this summary based on the actual conversation content, reflecting what was discussed and decided.
 
-## Step 4: Generate HTML
+## Step 4: Write PLAN.md (Implementation Plan)
+
+If the session involved planning or discussing an implementation approach, write `PLAN.md` with the plan that was discussed.
+
+If no plan was discussed (e.g., just a bug fix or Q&A session), write a minimal PLAN.md:
+
+```markdown
+# Plan
+
+No formal implementation plan was discussed in this session.
+
+See `session.md` for a summary of what was accomplished.
+```
+
+## Step 5: Generate HTML
 
 Run the export script to generate the HTML transcript:
 
 ```bash
-python3 ~/.claude/skills/export-session/export.py "{session_dir}/session.json" "{session_dir}/session"
+python3 ~/.claude/skills/export-session-plan/export.py "{session_dir}/session.json" "{session_dir}/session"
 ```
 
 This generates `session.html` from the JSON.
 
-## Step 5: Update CHANGELOG.md
+## Step 6: Update CHANGELOG.md
 
 Update `exports/CHANGELOG.md` with a new entry (newest first).
 
@@ -154,7 +170,7 @@ Update `exports/CHANGELOG.md` with a new entry (newest first).
 ```markdown
 # Session Changelog
 
-Timeline of exported sessions.
+Timeline of exported sessions and plans.
 
 ---
 
@@ -172,7 +188,7 @@ Timeline of exported sessions.
 
 The brief description should be 3-5 words summarizing the session's purpose.
 
-## Step 6: Sync to iCloud (Optional)
+## Step 7: Sync to iCloud (Optional)
 
 If iCloud Drive is available, sync exports for private backup. Auto-detects repo name:
 
@@ -187,7 +203,7 @@ This syncs `exports/` to `~/Library/Mobile Documents/com~apple~CloudDocs/code-ex
 
 Skip this step if iCloud Drive is not available (non-macOS or iCloud not configured).
 
-## Step 7: Report Results
+## Step 8: Report Results
 
 Tell the user:
 - Paths to all created files
@@ -198,7 +214,7 @@ Tell the user:
 ## Example Workflow
 
 ```bash
-# User runs: /export-session auth-refactor
+# User runs: /export-session-plan auth-refactor
 
 # 1. Determine output directory
 mkdir -p exports/sessions/auth-refactor
@@ -209,22 +225,26 @@ Write "exports/sessions/auth-refactor/session.json" with reconstructed conversat
 # 3. Write session.md (Claude generates this directly)
 Write "exports/sessions/auth-refactor/session.md" with problem/solution/gotchas summary
 
-# 4. Run export script (HTML only)
-python3 ~/.claude/skills/export-session/export.py "exports/sessions/auth-refactor/session.json" "exports/sessions/auth-refactor/session"
+# 4. Write PLAN.md
+Write "exports/sessions/auth-refactor/PLAN.md" with implementation plan
 
-# 5. Update changelog
+# 5. Run export script (HTML only)
+python3 ~/.claude/skills/export-session-plan/export.py "exports/sessions/auth-refactor/session.json" "exports/sessions/auth-refactor/session"
+
+# 6. Update changelog
 # Read exports/CHANGELOG.md, prepend new entry, write back
 
-# 6. Sync to iCloud (if available)
+# 7. Sync to iCloud (if available)
 REPO_NAME=$(basename "$(pwd)")
 ICLOUD_DIR="$HOME/Library/Mobile Documents/com~apple~CloudDocs/code-exports/$REPO_NAME"
 mkdir -p "$ICLOUD_DIR" && rsync -av --delete ./exports/ "$ICLOUD_DIR/exports/"
 
-# 7. Report
+# 8. Report
 Created:
 - exports/sessions/auth-refactor/session.json (raw data)
 - exports/sessions/auth-refactor/session.html (interactive transcript)
 - exports/sessions/auth-refactor/session.md (summary)
+- exports/sessions/auth-refactor/PLAN.md (implementation plan)
 - exports/CHANGELOG.md (updated)
 ```
 

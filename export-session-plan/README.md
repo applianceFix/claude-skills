@@ -1,10 +1,11 @@
-# Export Session
+# Export Session Plan
 
-A Claude Code skill that exports conversations with Claude-generated summaries.
+A Claude Code skill that exports conversations with Claude-generated summaries and implementation plans.
 
 ## Features
 
 - **Claude-generated summaries**: Problem/solution/gotchas format written by Claude
+- **Plan capture**: Saves implementation plans as PLAN.md
 - **Timeline tracking**: CHANGELOG.md tracks when sessions were exported
 - **Self-contained HTML**: Interactive transcript with sidebar navigation
 - **Offline support**: HTML works with `file://` protocol
@@ -15,8 +16,8 @@ A Claude Code skill that exports conversations with Claude-generated summaries.
 Copy the skill files to your Claude Code skills directory:
 
 ```bash
-mkdir -p ~/.claude/skills/export-session
-cp SKILL.md export.py template.html ~/.claude/skills/export-session/
+mkdir -p ~/.claude/skills/export-session-plan
+cp SKILL.md export.py template.html ~/.claude/skills/export-session-plan/
 ```
 
 Or run:
@@ -31,13 +32,13 @@ After installation, restart Claude Code and run:
 
 ```bash
 # Export with automatic naming (timestamp-based)
-/export-session
+/export-session-plan
 
 # Export with custom session name
-/export-session auth-refactor
+/export-session-plan auth-refactor
 
 # Export to custom path (bypasses default location)
-/export-session ./custom/path
+/export-session-plan ./custom/path
 ```
 
 ## Output Structure
@@ -50,7 +51,8 @@ exports/
 │   └── 2025-01-30-auth-refactor/
 │       ├── session.json      # Raw session data
 │       ├── session.html      # Interactive transcript view
-│       └── session.md        # Claude-generated summary
+│       ├── session.md        # Claude-generated summary
+│       └── PLAN.md           # Implementation plan
 └── CHANGELOG.md              # Timeline of exported sessions
 ```
 
@@ -82,6 +84,10 @@ Potential issues identified, edge cases to watch for, things learned.
 - `src/middleware/auth.ts` - Description of changes
 ```
 
+### PLAN.md
+
+Contains the implementation plan discussed during the session. If no formal plan was discussed, notes that the session was exploratory.
+
 ### CHANGELOG.md
 
 Timeline of exported sessions (newest first):
@@ -89,11 +95,11 @@ Timeline of exported sessions (newest first):
 ```markdown
 # Session Changelog
 
-Timeline of exported sessions.
+Timeline of exported sessions and plans.
 
 ---
 
-## 2025-01-30 - Auth token refresh fix
+## 2025-01-30 - Auth token refresh planning
 **Session:** [auth-refactor](sessions/auth-refactor/)
 
 ## 2025-01-29 - Initial project setup
@@ -105,14 +111,15 @@ Timeline of exported sessions.
 1. **Location**: Creates `exports/sessions/<name>/` directory
 2. **JSON**: Claude reconstructs the conversation into structured JSON
 3. **Summary**: Claude writes `session.md` with problem/solution/gotchas
-4. **HTML**: Python script converts JSON to interactive HTML
-5. **Changelog**: New entry prepended to `exports/CHANGELOG.md`
-6. **iCloud**: Syncs exports to iCloud Drive (if available)
+4. **Plan**: Claude writes `PLAN.md` with implementation details
+5. **HTML**: Python script converts JSON to interactive HTML
+6. **Changelog**: New entry prepended to `exports/CHANGELOG.md`
+7. **iCloud**: Syncs exports to iCloud Drive (if available)
 
 ## File Structure
 
 ```
-export-session/
+export-session-plan/
 ├── README.md           # This file
 ├── SKILL.md            # Skill instructions for Claude
 ├── export.py           # Python script (HTML generation only)
@@ -122,7 +129,7 @@ export-session/
 
 Installed skill location:
 ```
-~/.claude/skills/export-session/
+~/.claude/skills/export-session-plan/
 ├── SKILL.md
 ├── export.py
 └── template.html
@@ -138,6 +145,10 @@ The HTML export includes:
 - **Collapsible tools**: Click tool headers to expand/collapse output
 - **Dark theme**: Easy on the eyes
 - **Responsive**: Works on mobile devices
+
+## Related Skills
+
+- **implement**: Executes a PLAN.md file created by export-session-plan
 
 ## Acknowledgments
 
