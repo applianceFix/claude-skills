@@ -162,7 +162,7 @@ Write to: `exports/sessions/${DATE}-${PROJECT_NAME}-implementation/session.json`
 Run the export script to generate the HTML transcript:
 
 ```bash
-python3 ~/.claude/skills/share-session/export.py "{session_dir}/session.json" "{session_dir}/session"
+python3 ~/.claude/skills/export-session/export.py "{session_dir}/session.json" "{session_dir}/session"
 ```
 
 This generates `session.html` from the JSON using the shared template.

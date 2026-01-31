@@ -11,14 +11,14 @@ A Claude Code skill that executes plan files, creating feature branches and trac
 
 ## Prerequisites
 
-This skill requires the **share-session** skill to be installed for HTML generation:
+This skill requires the **export-session** skill to be installed for HTML generation:
 
 ```bash
-# Verify share-session is installed
-ls ~/.claude/skills/share-session/export.py
+# Verify export-session is installed
+ls ~/.claude/skills/export-session/export.py
 ```
 
-If not installed, get it from [session-reviewer](https://github.com/bentossell/session-reviewer).
+If not installed, install it from the `export-session/` directory in this repo.
 
 ## Installation
 
@@ -104,7 +104,7 @@ Brief summary of what was accomplished.
 4. **Create branch** - `feature/{name}` (fails if branch exists)
 5. **Execute plan** - Follows each step, stops on issues
 6. **Write session.json** - Records conversation
-7. **Generate HTML** - Uses share-session's export.py
+7. **Generate HTML** - Uses export-session's export.py
 8. **Create RESULTS.md** - Documents what was done
 9. **Report completion** - Shows created files and next steps
 

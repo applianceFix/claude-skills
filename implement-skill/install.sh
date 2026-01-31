@@ -6,11 +6,11 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 echo "Installing implement skill..."
 
-# Check for share-session dependency
-if [ ! -f "$HOME/.claude/skills/share-session/export.py" ]; then
-    echo "Warning: share-session skill not found at ~/.claude/skills/share-session/"
-    echo "The implement skill requires share-session for HTML generation."
-    echo "Install share-session first, or HTML export will fail."
+# Check for export-session dependency
+if [ ! -f "$HOME/.claude/skills/export-session/export.py" ]; then
+    echo "Warning: export-session skill not found at ~/.claude/skills/export-session/"
+    echo "The implement skill requires export-session for HTML generation."
+    echo "Install export-session first, or HTML export will fail."
     echo ""
 fi
 
