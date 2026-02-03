@@ -24,8 +24,8 @@ Timestamp format: `YYYY-MM-DD-HHMM` (e.g., `2024-01-29-1430`)
 
 ### With Arguments
 
-If the user provides a name, use it as the session directory name:
-- `/export-session-plan auth-refactor` → `exports/sessions/auth-refactor/`
+If the user provides a name, append it to the timestamp:
+- `/export-session-plan auth-refactor` → `exports/sessions/2024-01-29-1430-auth-refactor/`
 - `/export-session-plan ./custom/path` → `./custom/path/` (absolute paths bypass the default location logic)
 
 ### Files Created
@@ -43,11 +43,16 @@ Example structure:
 ```
 exports/
 ├── sessions/
-│   └── 2025-01-30-auth-refactor/
-│       ├── session.json      # Raw session data
-│       ├── session.html      # Interactive transcript view
-│       ├── session.md        # Claude-generated summary
-│       └── PLAN.md           # Implementation plan
+│   ├── 2025-01-30-1145/
+│   │   ├── session.json      # Raw session data
+│   │   ├── session.html      # Interactive transcript view
+│   │   ├── session.md        # Claude-generated summary
+│   │   └── PLAN.md           # Implementation plan
+│   └── 2025-01-30-1430-auth-refactor/
+│       ├── session.json
+│       ├── session.html
+│       ├── session.md
+│       └── PLAN.md
 └── CHANGELOG.md              # Timeline of plans
 ```
 
@@ -57,10 +62,13 @@ exports/
 # Check for exports directory, create if needed
 mkdir -p exports/sessions
 
+# Generate timestamp in YYYY-MM-DD-HHMM format
+TIMESTAMP=$(date '+%Y-%m-%d-%H%M')
+
 # Determine session name
-# If $ARGUMENTS is empty: use timestamp (YYYY-MM-DD-HHMM)
 # If $ARGUMENTS is a path starting with . or /: use that path directly
-# Otherwise: use exports/sessions/$ARGUMENTS
+# If $ARGUMENTS is empty: use exports/sessions/$TIMESTAMP
+# Otherwise: use exports/sessions/$TIMESTAMP-$ARGUMENTS
 ```
 
 ## Step 2: Write session.json
@@ -175,14 +183,14 @@ Timeline of exported sessions and plans.
 ---
 
 ## YYYY-MM-DD - [Brief description]
-**Session:** [session-name](sessions/session-name/)
+**Session:** [YYYY-MM-DD-HHMM-session-name](sessions/YYYY-MM-DD-HHMM-session-name/)
 ```
 
 **If CHANGELOG.md exists**, prepend a new entry after the header (after the `---` line):
 
 ```markdown
 ## YYYY-MM-DD - [Brief description]
-**Session:** [session-name](sessions/session-name/)
+**Session:** [YYYY-MM-DD-HHMM-session-name](sessions/YYYY-MM-DD-HHMM-session-name/)
 
 ```
 
@@ -217,19 +225,21 @@ Tell the user:
 # User runs: /export-session-plan auth-refactor
 
 # 1. Determine output directory
-mkdir -p exports/sessions/auth-refactor
+TIMESTAMP=$(date '+%Y-%m-%d-%H%M')  # e.g., 2024-01-29-1430
+SESSION_DIR="exports/sessions/${TIMESTAMP}-auth-refactor"
+mkdir -p "$SESSION_DIR"
 
 # 2. Write JSON
-Write "exports/sessions/auth-refactor/session.json" with reconstructed conversation
+Write "${SESSION_DIR}/session.json" with reconstructed conversation
 
 # 3. Write session.md (Claude generates this directly)
-Write "exports/sessions/auth-refactor/session.md" with problem/solution/gotchas summary
+Write "${SESSION_DIR}/session.md" with problem/solution/gotchas summary
 
 # 4. Write PLAN.md
-Write "exports/sessions/auth-refactor/PLAN.md" with implementation plan
+Write "${SESSION_DIR}/PLAN.md" with implementation plan
 
 # 5. Run export script (HTML only)
-python3 ~/.claude/skills/export-session-plan/export.py "exports/sessions/auth-refactor/session.json" "exports/sessions/auth-refactor/session"
+python3 ~/.claude/skills/export-session-plan/export.py "${SESSION_DIR}/session.json" "${SESSION_DIR}/session"
 
 # 6. Update changelog
 # Read exports/CHANGELOG.md, prepend new entry, write back
@@ -241,10 +251,10 @@ mkdir -p "$ICLOUD_DIR" && rsync -av --delete ./exports/ "$ICLOUD_DIR/exports/"
 
 # 8. Report
 Created:
-- exports/sessions/auth-refactor/session.json (raw data)
-- exports/sessions/auth-refactor/session.html (interactive transcript)
-- exports/sessions/auth-refactor/session.md (summary)
-- exports/sessions/auth-refactor/PLAN.md (implementation plan)
+- exports/sessions/2024-01-29-1430-auth-refactor/session.json (raw data)
+- exports/sessions/2024-01-29-1430-auth-refactor/session.html (interactive transcript)
+- exports/sessions/2024-01-29-1430-auth-refactor/session.md (summary)
+- exports/sessions/2024-01-29-1430-auth-refactor/PLAN.md (implementation plan)
 - exports/CHANGELOG.md (updated)
 ```
 

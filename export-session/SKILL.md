@@ -24,8 +24,8 @@ Timestamp format: `YYYY-MM-DD-HHMM` (e.g., `2024-01-29-1430`)
 
 ### With Arguments
 
-If the user provides a name, use it as the session directory name:
-- `/export-session auth-refactor` → `exports/sessions/auth-refactor/`
+If the user provides a name, append it to the timestamp:
+- `/export-session auth-refactor` → `exports/sessions/2024-01-29-1430-auth-refactor/`
 - `/export-session ./custom/path` → `./custom/path/` (absolute paths bypass the default location logic)
 
 ### Files Created
@@ -35,18 +35,18 @@ Within the session directory:
 - `session.html` - Interactive transcript view
 - `session.md` - Claude-generated summary (problem/solution/gotchas)
 
-Plus in exports/:
-- `CHANGELOG.md` - Timeline of exported sessions
-
 Example structure:
 ```
 exports/
-├── sessions/
-│   └── 2025-01-30-auth-refactor/
-│       ├── session.json      # Raw session data
-│       ├── session.html      # Interactive transcript view
-│       └── session.md        # Claude-generated summary
-└── CHANGELOG.md              # Timeline of sessions
+└── sessions/
+    ├── 2025-01-30-1145/
+    │   ├── session.json      # Raw session data
+    │   ├── session.html      # Interactive transcript view
+    │   └── session.md        # Claude-generated summary
+    └── 2025-01-30-1430-auth-refactor/
+        ├── session.json
+        ├── session.html
+        └── session.md
 ```
 
 ## Step 1: Determine Output Directory
@@ -55,10 +55,13 @@ exports/
 # Check for exports directory, create if needed
 mkdir -p exports/sessions
 
+# Generate timestamp in YYYY-MM-DD-HHMM format
+TIMESTAMP=$(date '+%Y-%m-%d-%H%M')
+
 # Determine session name
-# If $ARGUMENTS is empty: use timestamp (YYYY-MM-DD-HHMM)
 # If $ARGUMENTS is a path starting with . or /: use that path directly
-# Otherwise: use exports/sessions/$ARGUMENTS
+# If $ARGUMENTS is empty: use exports/sessions/$TIMESTAMP
+# Otherwise: use exports/sessions/$TIMESTAMP-$ARGUMENTS
 ```
 
 ## Step 2: Write session.json
@@ -145,55 +148,12 @@ python3 ~/.claude/skills/export-session/export.py "{session_dir}/session.json" "
 
 This generates `session.html` from the JSON.
 
-## Step 5: Update CHANGELOG.md
-
-Update `exports/CHANGELOG.md` with a new entry (newest first).
-
-**If CHANGELOG.md doesn't exist**, create it with:
-
-```markdown
-# Session Changelog
-
-Timeline of exported sessions.
-
----
-
-## YYYY-MM-DD - [Brief description]
-**Session:** [session-name](sessions/session-name/)
-```
-
-**If CHANGELOG.md exists**, prepend a new entry after the header (after the `---` line):
-
-```markdown
-## YYYY-MM-DD - [Brief description]
-**Session:** [session-name](sessions/session-name/)
-
-```
-
-The brief description should be 3-5 words summarizing the session's purpose.
-
-## Step 6: Sync to iCloud (Optional)
-
-If iCloud Drive is available, sync exports for private backup. Auto-detects repo name:
-
-```bash
-REPO_NAME=$(basename "$(pwd)")
-ICLOUD_DIR="$HOME/Library/Mobile Documents/com~apple~CloudDocs/code-exports/$REPO_NAME"
-mkdir -p "$ICLOUD_DIR"
-rsync -av --delete ./exports/ "$ICLOUD_DIR/exports/"
-```
-
-This syncs `exports/` to `~/Library/Mobile Documents/com~apple~CloudDocs/code-exports/<repo-name>/exports/`.
-
-Skip this step if iCloud Drive is not available (non-macOS or iCloud not configured).
-
-## Step 7: Report Results
+## Step 5: Report Results
 
 Tell the user:
 - Paths to all created files
 - Number of messages exported
 - Any warnings (truncated content, redacted secrets, incomplete recall)
-- Confirmation that files were synced to iCloud
 
 ## Example Workflow
 
@@ -201,31 +161,24 @@ Tell the user:
 # User runs: /export-session auth-refactor
 
 # 1. Determine output directory
-mkdir -p exports/sessions/auth-refactor
+TIMESTAMP=$(date '+%Y-%m-%d-%H%M')  # e.g., 2024-01-29-1430
+SESSION_DIR="exports/sessions/${TIMESTAMP}-auth-refactor"
+mkdir -p "$SESSION_DIR"
 
 # 2. Write JSON
-Write "exports/sessions/auth-refactor/session.json" with reconstructed conversation
+Write "${SESSION_DIR}/session.json" with reconstructed conversation
 
 # 3. Write session.md (Claude generates this directly)
-Write "exports/sessions/auth-refactor/session.md" with problem/solution/gotchas summary
+Write "${SESSION_DIR}/session.md" with problem/solution/gotchas summary
 
 # 4. Run export script (HTML only)
-python3 ~/.claude/skills/export-session/export.py "exports/sessions/auth-refactor/session.json" "exports/sessions/auth-refactor/session"
+python3 ~/.claude/skills/export-session/export.py "${SESSION_DIR}/session.json" "${SESSION_DIR}/session"
 
-# 5. Update changelog
-# Read exports/CHANGELOG.md, prepend new entry, write back
-
-# 6. Sync to iCloud (if available)
-REPO_NAME=$(basename "$(pwd)")
-ICLOUD_DIR="$HOME/Library/Mobile Documents/com~apple~CloudDocs/code-exports/$REPO_NAME"
-mkdir -p "$ICLOUD_DIR" && rsync -av --delete ./exports/ "$ICLOUD_DIR/exports/"
-
-# 7. Report
+# 5. Report
 Created:
-- exports/sessions/auth-refactor/session.json (raw data)
-- exports/sessions/auth-refactor/session.html (interactive transcript)
-- exports/sessions/auth-refactor/session.md (summary)
-- exports/CHANGELOG.md (updated)
+- exports/sessions/2024-01-29-1430-auth-refactor/session.json (raw data)
+- exports/sessions/2024-01-29-1430-auth-refactor/session.html (interactive transcript)
+- exports/sessions/2024-01-29-1430-auth-refactor/session.md (summary)
 ```
 
 ## Important Notes

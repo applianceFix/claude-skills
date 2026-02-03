@@ -28,7 +28,7 @@ Within the implementation directory:
 Example structure:
 ```
 exports/sessions/
-└── 2025-01-30-improved-workflow-stages-implementation/
+└── 2025-01-30-1430-improved-workflow-stages-implementation/
     ├── session.json
     ├── session.html
     └── RESULTS.md
@@ -74,11 +74,11 @@ Store both:
 Create the implementation tracking directory:
 
 ```bash
-# Get today's date
-DATE=$(date +%Y-%m-%d)
+# Generate timestamp in YYYY-MM-DD-HHMM format
+TIMESTAMP=$(date '+%Y-%m-%d-%H%M')
 
 # Create the implementation directory
-mkdir -p exports/sessions/${DATE}-${PROJECT_NAME}-implementation
+mkdir -p exports/sessions/${TIMESTAMP}-${PROJECT_NAME}-implementation
 ```
 
 ### Step 4: Create and Switch to Feature Branch
@@ -155,7 +155,7 @@ Create a JSON file with the session data:
 - **Large outputs**: Truncate to ~2000 chars with `[... truncated]`
 - **Sensitive data**: Replace API keys/passwords with `[REDACTED]`
 
-Write to: `exports/sessions/${DATE}-${PROJECT_NAME}-implementation/session.json`
+Write to: `exports/sessions/${TIMESTAMP}-${PROJECT_NAME}-implementation/session.json`
 
 ### Step 7: Generate session.html
 
@@ -203,7 +203,7 @@ This session implemented the plan defined in `[original plan path]`.
 `feature/[PROJECT_NAME]`
 ```
 
-Write this file to: `exports/sessions/${DATE}-${PROJECT_NAME}-implementation/RESULTS.md`
+Write this file to: `exports/sessions/${TIMESTAMP}-${PROJECT_NAME}-implementation/RESULTS.md`
 
 ### Step 9: Report Completion
 
@@ -217,12 +217,12 @@ Tell the user:
 
 ```bash
 # User runs:
-/implement exports/sessions/2025-01-30-improved-workflow-stages/PLAN.md
+/implement exports/sessions/2025-01-30-1145-improved-workflow-stages/PLAN.md
 
 # Claude:
 # 1. Reads the plan
 # 2. Extracts "improved-workflow-stages" from title
-# 3. Creates exports/sessions/2025-01-30-improved-workflow-stages-implementation/
+# 3. Creates exports/sessions/2025-01-30-1430-improved-workflow-stages-implementation/
 # 4. Creates/switches to feature/improved-workflow-stages branch
 # 5. Executes each step in the plan
 # 6. Writes session.json with full conversation
@@ -232,9 +232,9 @@ Tell the user:
 
 # Output:
 Created:
-- exports/sessions/2025-01-30-improved-workflow-stages-implementation/session.json
-- exports/sessions/2025-01-30-improved-workflow-stages-implementation/session.html
-- exports/sessions/2025-01-30-improved-workflow-stages-implementation/RESULTS.md
+- exports/sessions/2025-01-30-1430-improved-workflow-stages-implementation/session.json
+- exports/sessions/2025-01-30-1430-improved-workflow-stages-implementation/session.html
+- exports/sessions/2025-01-30-1430-improved-workflow-stages-implementation/RESULTS.md
 
 Branch: feature/improved-workflow-stages
 ```
