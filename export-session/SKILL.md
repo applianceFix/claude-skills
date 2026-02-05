@@ -34,6 +34,7 @@ Within the session directory:
 - `session.json` - Raw session data (intermediate)
 - `session.html` - Interactive transcript view
 - `session.md` - Claude-generated summary (problem/solution/gotchas)
+- `VISUAL-FLOW.md` - Visual diagrams (optional, for state machines/flows)
 
 Example structure:
 ```
@@ -46,7 +47,8 @@ exports/
     └── 2025-01-30-1430-auth-refactor/
         ├── session.json
         ├── session.html
-        └── session.md
+        ├── session.md
+        └── VISUAL-FLOW.md    # Optional
 ```
 
 ## Step 1: Determine Output Directory
@@ -148,10 +150,96 @@ python3 ~/.claude/skills/export-session/export.py "{session_dir}/session.json" "
 
 This generates `session.html` from the JSON.
 
-## Step 5: Report Results
+## Step 5: Generate VISUAL-FLOW.md (Optional)
+
+Determine if visual documentation would enhance understanding:
+
+**Ask yourself:**
+"Does this session involve state machines, complex flows, before/after
+architectural changes, or benefit from visual diagrams?"
+
+**Create VISUAL-FLOW.md if the session includes:**
+- ✅ State machines with multiple states and transitions
+- ✅ Complex multi-step workflows with branching logic
+- ✅ Before/after architectural comparisons
+- ✅ Timeline-based scenarios (e.g., "at 5s do X, at 10s do Y")
+- ✅ Network/API flow diagrams
+- ✅ UI state transitions
+
+**Skip VISUAL-FLOW.md for:**
+- ❌ Simple bug fixes
+- ❌ Configuration changes
+- ❌ Straightforward feature additions without complex logic
+- ❌ General discussions or Q&A sessions
+
+**If creating VISUAL-FLOW.md, include:**
+
+```markdown
+# [Session Name]: Visual Flow Documentation
+
+## Before vs After
+
+[Show the problem state vs solution state with clear comparison]
+
+Example:
+```
+### BEFORE (Problem)
+[ASCII diagram or structured explanation of old behavior]
+
+### AFTER (Solution)
+[ASCII diagram or structured explanation of new behavior]
+```
+
+## State Machine Flow
+
+[Diagram showing all states and transitions]
+
+Example:
+```
+                    ┌─────────┐
+                    │  IDLE   │
+                    └────┬────┘
+                         │ event
+                         ↓
+                  ┌──────────────┐
+                  │   STATE_A    │
+                  └──────┬───────┘
+                         │
+        ┌────────────────┴────────────────┐
+        ↓                                  ↓
+┌─────────────────┐            ┌─────────────────┐
+│    STATE_B      │            │    STATE_C      │
+└─────────────────┘            └─────────────────┘
+```
+
+## Timeline Examples
+
+[Walk through specific scenarios with time-based progression]
+
+Example:
+```
+### Scenario 1: Network Timeout
+
+Time    State       Description
+────────────────────────────────────────────────────
+0s      Loading     User clicks button
+5s      Slow        Request taking longer than expected
+10s     Diagnostic  Timeout occurred, checking network
+20s     Error       NetInfo confirms offline
+```
+
+## Key Transitions
+
+[Explain critical state changes and why they happen]
+```
+
+Write to: `{session_dir}/VISUAL-FLOW.md`
+
+## Step 6: Report Results
 
 Tell the user:
-- Paths to all created files
+- Paths to all created files (session.json, session.html, session.md, VISUAL-FLOW.md if created)
+- Whether visual documentation was included and why
 - Number of messages exported
 - Any warnings (truncated content, redacted secrets, incomplete recall)
 
@@ -174,11 +262,16 @@ Write "${SESSION_DIR}/session.md" with problem/solution/gotchas summary
 # 4. Run export script (HTML only)
 python3 ~/.claude/skills/export-session/export.py "${SESSION_DIR}/session.json" "${SESSION_DIR}/session"
 
-# 5. Report
+# 5. Generate VISUAL-FLOW.md if needed (optional)
+# If session involves state machines or complex flows
+Write "${SESSION_DIR}/VISUAL-FLOW.md" with visual diagrams
+
+# 6. Report
 Created:
 - exports/sessions/2024-01-29-1430-auth-refactor/session.json (raw data)
 - exports/sessions/2024-01-29-1430-auth-refactor/session.html (interactive transcript)
 - exports/sessions/2024-01-29-1430-auth-refactor/session.md (summary)
+- exports/sessions/2024-01-29-1430-auth-refactor/VISUAL-FLOW.md (if complex flows)
 ```
 
 ## Important Notes
@@ -186,5 +279,6 @@ Created:
 - Reconstruct the ENTIRE conversation from the beginning
 - Include ALL messages and tool uses in session.json
 - Write session.md yourself - do NOT run Python for markdown generation
+- Create VISUAL-FLOW.md when the session involves complex state machines, workflows, or would benefit from visual diagrams
 - If conversation is very long and early parts are unclear, note this in metadata
 - The HTML file is self-contained and works offline (file:// protocol)
