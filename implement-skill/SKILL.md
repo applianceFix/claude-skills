@@ -81,36 +81,7 @@ TIMESTAMP=$(date '+%Y-%m-%d-%H%M')
 mkdir -p exports/sessions/${TIMESTAMP}-${PROJECT_NAME}-implementation
 ```
 
-### Step 4: Create and Switch to Feature Branch
-
-```bash
-# Create feature branch from current branch
-git checkout -b feature/${PROJECT_NAME}
-```
-
-If the branch already exists:
-```
-Error: "branch name: feature/${PROJECT_NAME} already exists"
-```
-Exit the skill immediately.
-
-Report which branch you're now on.
-
-### Step 5: Execute the Plan
-
-Now execute the implementation steps defined in the plan file:
-
-1. Read through each step in the plan
-2. Execute each step methodically
-3. Track what actions you take for the RESULTS.md
-
-**Important guidelines:**
-- Follow the plan's steps in order
-- If a step is unclear, stop and ask the user for clarification before proceeding
-- If a step cannot be completed, stop and flag the issue to the user; wait for user direction before proceeding
-- Track all file changes, commands run, and decisions made
-
-### Step 6: Write session.json
+### Step 4: Write session.json
 
 Create a JSON file with the session data:
 
@@ -157,7 +128,7 @@ Create a JSON file with the session data:
 
 Write to: `exports/sessions/${TIMESTAMP}-${PROJECT_NAME}-implementation/session.json`
 
-### Step 7: Generate session.html
+### Step 5: Generate session.html
 
 Run the export script to generate the HTML transcript:
 
@@ -167,7 +138,7 @@ python3 ~/.claude/skills/export-session-plan/export.py "{session_dir}/session.js
 
 This generates `session.html` from the JSON using the shared template.
 
-### Step 8: Create RESULTS.md
+### Step 6: Create RESULTS.md
 
 After execution is complete, create `RESULTS.md` in the implementation directory:
 
@@ -197,21 +168,16 @@ This session implemented the plan defined in `[original plan path]`.
 - [ ] [Item 2 to verify]
 - [ ] [Item 3 to verify]
 ...
-
-## Branch
-
-`feature/[PROJECT_NAME]`
 ```
 
 Write this file to: `exports/sessions/${TIMESTAMP}-${PROJECT_NAME}-implementation/RESULTS.md`
 
-### Step 9: Report Completion
+### Step 7: Report Completion
 
 Tell the user:
 - Path to all created files (session.json, session.html, RESULTS.md)
-- Branch name created/used
 - Summary of steps completed vs. any that failed
-- Next steps (e.g., "Run verification checklist items, then create PR")
+- Next steps (e.g., "Run verification checklist items")
 
 ## Example
 
@@ -223,20 +189,16 @@ Tell the user:
 # 1. Reads the plan
 # 2. Extracts "improved-workflow-stages" from title
 # 3. Creates exports/sessions/2025-01-30-1430-improved-workflow-stages-implementation/
-# 4. Creates/switches to feature/improved-workflow-stages branch
-# 5. Executes each step in the plan
-# 6. Writes session.json with full conversation
-# 7. Generates session.html via export.py
-# 8. Creates RESULTS.md documenting what was done
-# 9. Reports completion
+# 4. Writes session.json with full conversation
+# 5. Generates session.html via export.py
+# 6. Creates RESULTS.md documenting what was done
+# 7. Reports completion
 
 # Output:
 Created:
 - exports/sessions/2025-01-30-1430-improved-workflow-stages-implementation/session.json
 - exports/sessions/2025-01-30-1430-improved-workflow-stages-implementation/session.html
 - exports/sessions/2025-01-30-1430-improved-workflow-stages-implementation/RESULTS.md
-
-Branch: feature/improved-workflow-stages
 ```
 
 ## Notes

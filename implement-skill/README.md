@@ -1,13 +1,12 @@
 # Implement Skill
 
-A Claude Code skill that executes plan files, creating feature branches and tracking implementation results.
+A Claude Code skill that saves implementation sessions, tracking the work done and results achieved.
 
 ## Features
 
-- **Plan execution**: Follows steps defined in a PLAN.md file
-- **Git integration**: Creates feature branches automatically
 - **Session tracking**: Records the implementation conversation
 - **Results documentation**: Generates RESULTS.md with completed steps and verification checklist
+- **Export formats**: Creates both JSON and HTML versions of the session
 
 ## Prerequisites
 
@@ -37,11 +36,13 @@ Or run:
 
 ## Usage
 
-After installation, restart Claude Code and run:
+After you've completed implementing a plan, save the session by running:
 
 ```bash
 /implement path/to/PLAN.md
 ```
+
+This skill should be run **after** the implementation work is complete to save the session and generate documentation.
 
 ### Plan File Requirements
 
@@ -90,10 +91,6 @@ Brief summary of what was accomplished.
 
 - [ ] Item to verify
 - [ ] Another item
-
-## Branch
-
-`feature/my-feature-name`
 ```
 
 ## Workflow
@@ -101,21 +98,18 @@ Brief summary of what was accomplished.
 1. **Validate** - Checks plan path is provided and file exists
 2. **Extract name** - Parses "Plan:" prefix from title (required)
 3. **Create directory** - `exports/sessions/{date}-{name}-implementation/`
-4. **Create branch** - `feature/{name}` (fails if branch exists)
-5. **Execute plan** - Follows each step, stops on issues
-6. **Write session.json** - Records conversation
-7. **Generate HTML** - Uses export-session-plan's export.py
-8. **Create RESULTS.md** - Documents what was done
-9. **Report completion** - Shows created files and next steps
+4. **Write session.json** - Records conversation
+5. **Generate HTML** - Uses export-session-plan's export.py
+6. **Create RESULTS.md** - Documents what was done
+7. **Report completion** - Shows created files and next steps
 
 ## Error Handling
 
 The skill stops immediately and waits for user direction when:
 
 - Plan file doesn't have "Plan:" prefix in title
-- Feature branch already exists
-- A step is unclear and needs clarification
-- A step cannot be completed
+- Session directory cannot be created
+- Export script fails to generate HTML
 
 ## File Structure
 
